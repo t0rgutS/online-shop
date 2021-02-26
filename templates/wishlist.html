@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Товар</title>
+    <title>Желаемое</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
     <script src="../static/js/bootstrap.js"></script>
     <link href="../static/css/bootstrap.css" rel="stylesheet"/>
@@ -43,50 +43,49 @@
         </div>
     </nav>
 </header>
-<div class="d-flex mt-5">
-    <div>
-        <img src="../images/product_test.jpg" class="img-fluid ml-3 mr-5"/>
-    </div>
-    <div class="form-group ml-5 mr-5">
-        <fieldset>
-            <span class="text-warning">&#9733;</span>
-            <span class="text-warning">&#9733;</span>
-            <span class="text-warning">&#9733;</span>
-            <span>&#9734;</span>
-            <span>&#9734;</span>
-        </fieldset>
-        <h3>Название</h3>
-        <p>Цена: <span class="text-primary">2000 р.</span> + доставка</p>
-        <p class="text-success mb-5">В наличии 5 штук</p>
-        <p class="mt-5">Продавец: <a href="">ivanov_vasilii</a></p>
-        <p>Телефон: ...</p>
-        <p>E-mail: ...</p>
-    </div>
-    <div class="ml-auto mr-3">
-        <div class="card text-center border border-secondary">
-            <div class="card-header">
-                <input type="number" class="form-control mb-2 text-center" placeholder="1">
-                <button class="form-control btn btn-outline-success text-dark">В корзину</button>
-            </div>
-            <div class="card-footer">
-                <button class="form-control btn btn-outline-warning text-dark">В желаемое</button>
+<ul class="nav nav-tabs ml-2">
+    <li class="nav-item">
+        <a class="nav-link" aria-current="page" href="cart.html">Корзина</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="wishlist.html">Желаемое</a>
+    </li>
+</ul>
+<div class="container">
+    <div class="row">
+        <div class="col-sm-8 col-lg-4">
+            <div class="card mt-3 mb-3">
+                <div class="card-header text-center">
+                    <button type="button" class="btn btn-outline-danger close" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h5 class="card-title">Название товара</h5>
+                </div>
+                <div class="card-body text-center">
+                    <img class="card-img-top img-fluid"
+                         src="../images/product_test.jpg" alt="Картинки нет...">
+                </div>
+                <div class="card-footer">
+                    <p class="card-text text-primary">2000 р.</p>
+                    <div class="text-center mt-3">
+                        <button class="form-control btn btn-outline-success text-dark">
+                            Открыть
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<div class="ml-2">
-    <h6 class="mt-4">Производитель:</h6>
-    <input class="form-control w-50" placeholder="..." disabled>
-    <h6 class="mt-3">Состояние:</h6>
-    <input class="form-control w-50" placeholder="..." disabled>
-    <h6 class="mt-3">Категория:</h6>
-    <input class="form-control w-50" placeholder="..." disabled>
-    <h6 class="mt-3">Краткое описание:</h6>
-    <textarea class="form-control w-50" disabled>
-        ...
-    </textarea>
-</div>
-<footer class="mb-5">
+<footer class="mt-3 mb-5">
+    <div class="d-flex justify-content-between">
+        <div class="form-inline ml-4">
+            <button class="btn btn-outline-dark mr-3">&lt;</button>
+            Страница 1
+            <button class="btn btn-outline-dark ml-3">&gt;</button>
+        </div>
+        <button class="btn btn-outline-info text-dark mr-4">Фильтры</button>
+    </div>
 </footer>
 </body>
 </html>
