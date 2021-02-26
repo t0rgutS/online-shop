@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PositiveOrZero;
 
 @Table(name = "buckets")
 @Entity
@@ -30,6 +31,7 @@ public class Bucket {
     private Product product;
 
     @NotNull(message = "Укажите количество товара!")
+    @PositiveOrZero(message = "Количество товара должно быть положительным числом!")
     @Column(name = "count")
     private Integer count;
 }

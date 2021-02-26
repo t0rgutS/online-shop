@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 @RestController
 @RequestMapping("/api/buckets")
@@ -20,12 +21,12 @@ public class BucketController {
     private final BucketService service;
 
     @RequestMapping(value = "/create", method = RequestMethod.POST)
-    public BucketResponse create(@Valid BucketCURequest request) {
+    public BucketResponse create(@NotNull BucketCURequest request) {
         return service.create(request);
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.PATCH)
-    public BucketResponse update(@PathVariable Long id, @Valid BucketCURequest request) {
+    public BucketResponse update(@PathVariable Long id, @NotNull BucketCURequest request) {
         return service.update(id, request);
     }
 
@@ -34,8 +35,13 @@ public class BucketController {
         return service.delete(id);
     }
 
-    @RequestMapping(method = RequestMethod.GET)
-    public Page<BucketResponse> getAll(@Valid ProductSearchRequest request) {
-        return service.getAll(request);
+    @RequestMapping(value = "cart", method = RequestMethod.GET)
+    public Page<BucketResponse> getCart(@NotNull ProductSearchRequest request) {
+        return service.getAll(request, false);
+    }
+
+    @RequestMapping(value = "wishlist", method = RequestMethod.GET)
+    public Page<BucketResponse> getWishList(@NotNull ProductSearchRequest request) {
+        return service.getAll(request, false);
     }
 }

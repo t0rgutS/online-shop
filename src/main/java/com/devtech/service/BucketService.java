@@ -7,12 +7,14 @@ import com.devtech.entity.Bucket;
 import com.devtech.entity.Product;
 import com.devtech.entity.User;
 import com.devtech.exception.AddingYourOwnProductException;
+import com.devtech.exception.BucketCountException;
 import com.devtech.exception.IncorrectSessionLoginException;
 import com.devtech.exception.NoProductsLeftException;
 import com.devtech.repository.BucketRepository;
 import com.devtech.repository.ProductRepository;
 import com.devtech.repository.UserRepository;
 import com.devtech.utility.SessionUserData;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
@@ -40,7 +42,7 @@ public class BucketService {
 
     public BucketResponse create(@NotNull BucketCURequest request) {
         if (!sessionUser.getLogin().equals(request.getLogin()))
-            throw new IncorrectSessionLoginException("Не пытайтесь добавлять что-то в чужую корзину!");
+            throw new IncorrectSessionLoginException("Нет доступа!");
         User user = userRepo.findByLogin(request.getLogin()).orElseThrow(USER_NOT_FOUND);
         Product product = productRepo.findById(request.getProductId()).orElseThrow(PRODUCT_NOT_FOUND);
         if (product.getUser().equals(user))
@@ -60,15 +62,21 @@ public class BucketService {
     public BucketResponse update(@NotNull Long id, @NotNull BucketCURequest request) {
         Bucket bucket = bucketRepo.findById(id).orElseThrow(BUCKET_NOT_FOUND);
         if (!sessionUser.getLogin().equals(bucket.getUser().getLogin()))
-            throw new IncorrectSessionLoginException("Не пытайтесь добавлять что-то в чужую корзину!");
+            throw new IncorrectSessionLoginException("Нет доступа!");
         if (request.getCount() != null) {
-            Product product = bucket.getProduct();
-            if (product.getCount() + bucket.getCount() - request.getCount() < 0)
-                throw new NoProductsLeftException();
-            bucket.setCount(request.getCount());
-            product.setCount(product.getCount() + bucket.getCount() - request.getCount());
-            productRepo.save(product);
-            bucketRepo.save(bucket);
+            if (!((request.getCount() > 0 && bucket.getCount() == 0)
+                    || (request.getCount() == 0 && bucket.getCount() > 0))) {
+                Product product = bucket.getProduct();
+                if (product.getCount() + bucket.getCount() - request.getCount() < 0)
+                    throw new NoProductsLeftException();
+                bucket.setCount(request.getCount());
+                product.setCount(product.getCount() + bucket.getCount() - request.getCount());
+                productRepo.save(product);
+                bucketRepo.save(bucket);
+            } else if (request.getCount() == 0 && bucket.getCount() > 0)
+                throw new BucketCountException("Вы не можете добавить в корзину 0 единиц товара!");
+            else
+                throw new BucketCountException("Ошибка: товар в желаемом должен иметь 0 в поле \"Количество\"!");
         }
         return new BucketResponse(bucket);
     }
@@ -76,7 +84,7 @@ public class BucketService {
     public BucketResponse delete(@NotNull Long id) {
         Bucket bucket = bucketRepo.findById(id).orElseThrow(BUCKET_NOT_FOUND);
         if (!bucket.getUser().getLogin().equals(sessionUser.getLogin()))
-            throw new IncorrectSessionLoginException("Вы не можете обчищать чужие корзины!");
+            throw new IncorrectSessionLoginException("Нет доступа!");
         Product product = bucket.getProduct();
         product.setCount(product.getCount() + bucket.getCount());
         productRepo.save(product);
@@ -84,12 +92,16 @@ public class BucketService {
         return new BucketResponse(bucket);
     }
 
-    public Page<BucketResponse> getAll(ProductSearchRequest request) {
+    public Page<BucketResponse> getAll(ProductSearchRequest request, Boolean wishList) {
         return bucketRepo.findAll(new Specification<Bucket>() {
             @Nullable
             @Override
             public Predicate toPredicate(Root<Bucket> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
                 Predicate predicate = builder.equal(root.get("user").get("login"), sessionUser.getLogin());
+                if (wishList)
+                    predicate = builder.and(predicate, builder.equal(root.get("count"), 0));
+                else
+                    predicate = builder.and(predicate, builder.greaterThan(root.get("count"), 0));
                 if (request.getSearchString() != null && !request.getSearchString().isEmpty()) {
                     predicate = builder.and(predicate, builder.or(
                             builder.like(root.get("product").get("productName"), "%" + request.getSearchString() + "%"),
