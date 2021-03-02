@@ -13,15 +13,13 @@ import com.devtech.repository.CategoryRepository;
 import com.devtech.repository.ProductRepository;
 import com.devtech.repository.RatingRepository;
 import com.devtech.repository.UserRepository;
-import com.devtech.utility.SessionUserData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.Nullable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
-import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
@@ -34,10 +32,6 @@ import static com.devtech.exception.ExceptionList.*;
 @RestController
 @RequiredArgsConstructor
 public class ProductService {
-    @Resource(name = "sessionUser")
-    private SessionUserData sessionUser;
-
-    private final EntityManager manager;
     private final ProductRepository productRepo;
     private final CategoryRepository categoryRepo;
     private final UserRepository userRepo;
@@ -97,7 +91,8 @@ public class ProductService {
     }
 
     public ProductResponse get(@NotNull Long id) {
-        Rating rating = ratingRepo.findByProduct_IdAndUser_Login(id, sessionUser.getLogin()).orElse(null);
+        Rating rating = ratingRepo.findByProduct_IdAndUser_Login(id, ((User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getLogin()).orElse(null);
         if (rating != null)
             return new ProductResponse(productRepo.findById(id).orElseThrow(PRODUCT_NOT_FOUND));
         else
@@ -194,7 +189,8 @@ public class ProductService {
 
     public ProductResponse delete(@Valid Long id) {
         Product product = productRepo.findById(id).orElseThrow(PRODUCT_NOT_FOUND);
-        if (!product.getUser().getLogin().equals(sessionUser.getLogin()))
+        if (!product.getUser().getLogin().equals(((User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getLogin()))
             throw new IncorrectSessionLoginException("Вы не можете удалить чужой товар!");
         productRepo.delete(product);
         return new ProductResponse(product);

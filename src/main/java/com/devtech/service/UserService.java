@@ -10,14 +10,12 @@ import com.devtech.exception.TooYoungUserException;
 import com.devtech.repository.CityRepository;
 import com.devtech.repository.RatingRepository;
 import com.devtech.repository.UserRepository;
-import com.devtech.utility.SessionUserData;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Bean;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.annotation.SessionScope;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -30,14 +28,8 @@ import static com.devtech.exception.ExceptionList.USER_NOT_FOUND;
 @RestController
 @RequiredArgsConstructor
 public class UserService {
-    @Bean
-    @SessionScope
-    public SessionUserData sessionUser() {
-        return new SessionUserData();
-    }
-
-    @Resource(name = "sessionUser")
-    private SessionUserData sessionUser;
+    @Resource(name = "bCryptPasswordEncoder")
+    private BCryptPasswordEncoder encoder;
 
     private final UserRepository userRepo;
     private final CityRepository cityRepo;
@@ -51,7 +43,7 @@ public class UserService {
         City city = cityRepo.findByCityAndCountry_Country(request.getCityName(),
                 request.getCountryName()).orElseThrow(CITY_NOT_FOUND);
         user.setLogin(request.getLogin());
-        user.setPassword(request.getPassword());
+        user.setPassword(encoder.encode(request.getPassword()));
         user.setSurname(request.getSurname());
         user.setName(request.getName());
         user.setPatronymic(request.getPatronymic());
@@ -78,7 +70,7 @@ public class UserService {
             user.setBirthDate(request.getBirthDate());
         }
         if (request.getPassword() != null && !request.getPassword().isEmpty())
-            user.setPassword(request.getPassword());
+            user.setPassword(encoder.encode(request.getPassword()));
         if (request.getSurname() != null && !request.getSurname().isEmpty())
             user.setSurname(request.getSurname());
         if (request.getName() != null && !request.getName().isEmpty())
@@ -96,7 +88,8 @@ public class UserService {
     }
 
     public UserResponse get(@NotNull Long id) {
-        List<Rating> ratings = ratingRepo.findAllByProduct_User_Login(sessionUser.getLogin());
+        List<Rating> ratings = ratingRepo.findAllByProduct_User_Login(((User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getLogin());
         if (ratings.size() > 0) {
             return new UserResponse(userRepo.findById(id).orElseThrow(USER_NOT_FOUND),
                     ratings.stream().mapToDouble(Rating::getRating).sum() / ratings.size());
@@ -104,9 +97,19 @@ public class UserService {
             return new UserResponse(userRepo.findById(id).orElseThrow(USER_NOT_FOUND));
     }
 
+    public boolean findUser(@NotNull String login, @NotNull String password) {
+        User user = userRepo.findByLogin(login).orElse(null);
+        if (user == null)
+            return false;
+        if (!user.getPassword().equals(encoder.encode(password)))
+            return false;
+        return true;
+    }
+
     public UserResponse delete(@NotNull Long id) {
         User user = userRepo.findById(id).orElseThrow(USER_NOT_FOUND);
-        if (!user.getLogin().equals(sessionUser.getLogin()))
+        if (!user.getLogin().equals(((User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getLogin()))
             throw new IncorrectSessionLoginException("Вы не можете удалить чужой аккаунт!");
         userRepo.delete(user);
         return new UserResponse(user);

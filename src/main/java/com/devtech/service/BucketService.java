@@ -13,15 +13,13 @@ import com.devtech.exception.NoProductsLeftException;
 import com.devtech.repository.BucketRepository;
 import com.devtech.repository.ProductRepository;
 import com.devtech.repository.UserRepository;
-import com.devtech.utility.SessionUserData;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.Nullable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
@@ -33,15 +31,13 @@ import static com.devtech.exception.ExceptionList.*;
 @RestController
 @RequiredArgsConstructor
 public class BucketService {
-    @Resource(name = "sessionUser")
-    private SessionUserData sessionUser;
-
     private final BucketRepository bucketRepo;
     private final UserRepository userRepo;
     private final ProductRepository productRepo;
 
     public BucketResponse create(@NotNull BucketCURequest request) {
-        if (!sessionUser.getLogin().equals(request.getLogin()))
+        if (!((User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getLogin().equals(request.getLogin()))
             throw new IncorrectSessionLoginException("Нет доступа!");
         User user = userRepo.findByLogin(request.getLogin()).orElseThrow(USER_NOT_FOUND);
         Product product = productRepo.findById(request.getProductId()).orElseThrow(PRODUCT_NOT_FOUND);
@@ -61,7 +57,8 @@ public class BucketService {
 
     public BucketResponse update(@NotNull Long id, @NotNull BucketCURequest request) {
         Bucket bucket = bucketRepo.findById(id).orElseThrow(BUCKET_NOT_FOUND);
-        if (!sessionUser.getLogin().equals(bucket.getUser().getLogin()))
+        if (!((User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getLogin().equals(bucket.getUser().getLogin()))
             throw new IncorrectSessionLoginException("Нет доступа!");
         if (request.getCount() != null) {
             if (!((request.getCount() > 0 && bucket.getCount() == 0)
@@ -83,7 +80,8 @@ public class BucketService {
 
     public BucketResponse delete(@NotNull Long id) {
         Bucket bucket = bucketRepo.findById(id).orElseThrow(BUCKET_NOT_FOUND);
-        if (!bucket.getUser().getLogin().equals(sessionUser.getLogin()))
+        if (!bucket.getUser().getLogin().equals(((User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getLogin()))
             throw new IncorrectSessionLoginException("Нет доступа!");
         Product product = bucket.getProduct();
         product.setCount(product.getCount() + bucket.getCount());
@@ -97,7 +95,8 @@ public class BucketService {
             @Nullable
             @Override
             public Predicate toPredicate(Root<Bucket> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
-                Predicate predicate = builder.equal(root.get("user").get("login"), sessionUser.getLogin());
+                Predicate predicate = builder.equal(root.get("user").get("login"), ((User) SecurityContextHolder.
+                        getContext().getAuthentication().getPrincipal()).getLogin());
                 if (wishList)
                     predicate = builder.and(predicate, builder.equal(root.get("count"), 0));
                 else
