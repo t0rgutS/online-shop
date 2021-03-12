@@ -13,7 +13,7 @@ import javax.validation.constraints.PositiveOrZero;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Bucket {
+public class CartWish {
     @Id
     @NotNull(message = "Укажите идентификатор записи!")
     @GeneratedValue(strategy = GenerationType.IDENTITY)

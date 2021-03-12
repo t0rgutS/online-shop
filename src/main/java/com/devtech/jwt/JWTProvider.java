@@ -11,10 +11,10 @@ import java.util.Date;
 
 @Component
 public class JWTProvider {
-
+    //TODO key
+    
     public String generateToken(String login) {
         Date date = Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
-        //TODO key
         return Jwts.builder().setSubject(login).setExpiration(date)
                 .signWith(SignatureAlgorithm.HS512, "test").compact();
     }

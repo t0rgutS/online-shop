@@ -1,16 +1,16 @@
 package com.devtech.service;
 
-import com.devtech.dto.bucket.BucketCURequest;
-import com.devtech.dto.bucket.BucketResponse;
+import com.devtech.dto.cartwish.CartWishCURequest;
+import com.devtech.dto.cartwish.CartWishResponse;
 import com.devtech.dto.product.ProductSearchRequest;
-import com.devtech.entity.Bucket;
+import com.devtech.entity.CartWish;
 import com.devtech.entity.Product;
 import com.devtech.entity.User;
 import com.devtech.exception.AddingYourOwnProductException;
 import com.devtech.exception.BucketCountException;
 import com.devtech.exception.IncorrectSessionLoginException;
 import com.devtech.exception.NoProductsLeftException;
-import com.devtech.repository.BucketRepository;
+import com.devtech.repository.CartWishRepository;
 import com.devtech.repository.ProductRepository;
 import com.devtech.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,12 +30,12 @@ import static com.devtech.exception.ExceptionList.*;
 
 @RestController
 @RequiredArgsConstructor
-public class BucketService {
-    private final BucketRepository bucketRepo;
+public class CartWishService {
+    private final CartWishRepository cartWishRepo;
     private final UserRepository userRepo;
     private final ProductRepository productRepo;
 
-    public BucketResponse create(@NotNull BucketCURequest request) {
+    public CartWishResponse create(@NotNull CartWishCURequest request) {
         if (!((User) SecurityContextHolder.
                 getContext().getAuthentication().getPrincipal()).getLogin().equals(request.getLogin()))
             throw new IncorrectSessionLoginException("Нет доступа!");
@@ -45,56 +45,56 @@ public class BucketService {
             throw new AddingYourOwnProductException();
         if (product.getCount() - request.getCount() < 0)
             throw new NoProductsLeftException();
-        Bucket bucket = new Bucket();
-        bucket.setUser(user);
-        bucket.setProduct(product);
-        bucket.setCount(request.getCount());
+        CartWish cartWish = new CartWish();
+        cartWish.setUser(user);
+        cartWish.setProduct(product);
+        cartWish.setCount(request.getCount());
         product.setCount(product.getCount() - request.getCount());
         productRepo.save(product);
-        bucketRepo.save(bucket);
-        return new BucketResponse(bucket);
+        cartWishRepo.save(cartWish);
+        return new CartWishResponse(cartWish);
     }
 
-    public BucketResponse update(@NotNull Long id, @NotNull BucketCURequest request) {
-        Bucket bucket = bucketRepo.findById(id).orElseThrow(BUCKET_NOT_FOUND);
+    public CartWishResponse update(@NotNull Long id, @NotNull CartWishCURequest request) {
+        CartWish cartWish = cartWishRepo.findById(id).orElseThrow(BUCKET_NOT_FOUND);
         if (!((User) SecurityContextHolder.
-                getContext().getAuthentication().getPrincipal()).getLogin().equals(bucket.getUser().getLogin()))
+                getContext().getAuthentication().getPrincipal()).getLogin().equals(cartWish.getUser().getLogin()))
             throw new IncorrectSessionLoginException("Нет доступа!");
         if (request.getCount() != null) {
-            if (!((request.getCount() > 0 && bucket.getCount() == 0)
-                    || (request.getCount() == 0 && bucket.getCount() > 0))) {
-                Product product = bucket.getProduct();
-                if (product.getCount() + bucket.getCount() - request.getCount() < 0)
+            if (!((request.getCount() > 0 && cartWish.getCount() == 0)
+                    || (request.getCount() == 0 && cartWish.getCount() > 0))) {
+                Product product = cartWish.getProduct();
+                if (product.getCount() + cartWish.getCount() - request.getCount() < 0)
                     throw new NoProductsLeftException();
-                bucket.setCount(request.getCount());
-                product.setCount(product.getCount() + bucket.getCount() - request.getCount());
+                cartWish.setCount(request.getCount());
+                product.setCount(product.getCount() + cartWish.getCount() - request.getCount());
                 productRepo.save(product);
-                bucketRepo.save(bucket);
-            } else if (request.getCount() == 0 && bucket.getCount() > 0)
+                cartWishRepo.save(cartWish);
+            } else if (request.getCount() == 0 && cartWish.getCount() > 0)
                 throw new BucketCountException("Вы не можете добавить в корзину 0 единиц товара!");
             else
                 throw new BucketCountException("Ошибка: товар в желаемом должен иметь 0 в поле \"Количество\"!");
         }
-        return new BucketResponse(bucket);
+        return new CartWishResponse(cartWish);
     }
 
-    public BucketResponse delete(@NotNull Long id) {
-        Bucket bucket = bucketRepo.findById(id).orElseThrow(BUCKET_NOT_FOUND);
-        if (!bucket.getUser().getLogin().equals(((User) SecurityContextHolder.
+    public CartWishResponse delete(@NotNull Long id) {
+        CartWish cartWish = cartWishRepo.findById(id).orElseThrow(BUCKET_NOT_FOUND);
+        if (!cartWish.getUser().getLogin().equals(((User) SecurityContextHolder.
                 getContext().getAuthentication().getPrincipal()).getLogin()))
             throw new IncorrectSessionLoginException("Нет доступа!");
-        Product product = bucket.getProduct();
-        product.setCount(product.getCount() + bucket.getCount());
+        Product product = cartWish.getProduct();
+        product.setCount(product.getCount() + cartWish.getCount());
         productRepo.save(product);
-        bucketRepo.delete(bucket);
-        return new BucketResponse(bucket);
+        cartWishRepo.delete(cartWish);
+        return new CartWishResponse(cartWish);
     }
 
-    public Page<BucketResponse> getAll(ProductSearchRequest request, Boolean wishList) {
-        return bucketRepo.findAll(new Specification<Bucket>() {
+    public Page<CartWishResponse> getAll(ProductSearchRequest request, Boolean wishList) {
+        return cartWishRepo.findAll(new Specification<CartWish>() {
             @Nullable
             @Override
-            public Predicate toPredicate(Root<Bucket> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
+            public Predicate toPredicate(Root<CartWish> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
                 Predicate predicate = builder.equal(root.get("user").get("login"), ((User) SecurityContextHolder.
                         getContext().getAuthentication().getPrincipal()).getLogin());
                 if (wishList)
@@ -168,6 +168,6 @@ public class BucketService {
                 }
                 return predicate;
             }
-        }, request.pageable()).map(BucketResponse::new);
+        }, request.pageable()).map(CartWishResponse::new);
     }
 }
