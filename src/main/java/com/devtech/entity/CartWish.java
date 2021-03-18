@@ -8,7 +8,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
 
-@Table(name = "buckets")
+@Table(name = "cartwish")
 @Entity
 @Getter
 @Setter
@@ -17,7 +17,7 @@ public class CartWish {
     @Id
     @NotNull(message = "Укажите идентификатор записи!")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "bucket_id")
+    @Column(name = "cartwish_id")
     private Long id;
 
     @NotNull(message = "Укажите покупателя!")

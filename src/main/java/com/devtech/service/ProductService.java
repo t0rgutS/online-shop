@@ -3,16 +3,10 @@ package com.devtech.service;
 import com.devtech.dto.product.ProductCURequest;
 import com.devtech.dto.product.ProductResponse;
 import com.devtech.dto.product.ProductSearchRequest;
-import com.devtech.entity.Category;
-import com.devtech.entity.Product;
-import com.devtech.entity.Rating;
-import com.devtech.entity.User;
+import com.devtech.entity.*;
 import com.devtech.exception.IncorrectSessionLoginException;
 import com.devtech.exception.NoContactsException;
-import com.devtech.repository.CategoryRepository;
-import com.devtech.repository.ProductRepository;
-import com.devtech.repository.RatingRepository;
-import com.devtech.repository.UserRepository;
+import com.devtech.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
@@ -36,10 +30,17 @@ public class ProductService {
     private final CategoryRepository categoryRepo;
     private final UserRepository userRepo;
     private final RatingRepository ratingRepo;
+    private final ProducerRepository producerRepo;
 
     public ProductResponse create(@NotNull ProductCURequest request) {
         Category category = categoryRepo.findByCategoryName(request.getCategoryName()).orElseThrow(CATEGORY_NOT_FOUND);
         User user = userRepo.findByLogin(request.getUserLogin()).orElseThrow(USER_NOT_FOUND);
+        Producer producer = producerRepo.findByProducerName(request.getProducer()).orElse(null);
+        if (producer == null) {
+            producer = new Producer();
+            producer.setProducerName(request.getProducer());
+            producerRepo.save(producer);
+        }
         if ((user.getEmail() == null && user.getPhone() == null)
                 || (user.getEmail() == null && user.getPhone() != null && user.getPhone().isEmpty())
                 || (user.getPhone() == null && user.getEmail() != null && user.getEmail().isEmpty())
@@ -48,7 +49,7 @@ public class ProductService {
         Product product = new Product();
         product.setProductName(request.getProductName());
         product.setPhotoURL(request.getPhotoURL());
-        product.setProducer(request.getProducer());
+        product.setProducer(producer);
         product.setPrice(request.getPrice());
         product.setDescription(request.getDescription());
         product.setCondition(request.getCondition());
@@ -74,8 +75,15 @@ public class ProductService {
             product.setProductName(request.getProductName());
         if (request.getPhotoURL() != null && !request.getPhotoURL().isEmpty())
             product.setPhotoURL(request.getPhotoURL());
-        if (request.getProducer() != null && !request.getProducer().isEmpty())
-            product.setProducer(request.getProducer());
+        if (request.getProducer() != null && !request.getProducer().isEmpty()) {
+            Producer producer = producerRepo.findByProducerName(request.getProducer()).orElse(null);
+            if (producer == null) {
+                producer = new Producer();
+                producer.setProducerName(request.getProducer());
+                producerRepo.save(producer);
+            }
+            product.setProducer(producer);
+        }
         if (request.getPrice() != null)
             product.setPrice(request.getPrice());
         if (request.getDescription() != null && !request.getDescription().isEmpty())

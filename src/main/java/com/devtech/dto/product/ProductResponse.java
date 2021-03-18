@@ -26,7 +26,7 @@ public class ProductResponse {
         this.id = product.getId();
         this.productName = product.getProductName();
         this.photoURL = product.getPhotoURL();
-        this.producer = product.getProducer();
+        this.producer = product.getProducer().getProducerName();
         this.price = product.getPrice();
         this.description = product.getDescription();
         this.condition = product.getCondition();

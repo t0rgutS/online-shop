@@ -33,9 +33,9 @@ public class Product {
     private String photoURL;
 
     @NotNull(message = "Укажите производителя!")
-    @NotEmpty(message = "Укажите производителя!")
-    @Column(name = "producer")
-    private String producer;
+    @JoinColumn(name = "producer_id")
+    @ManyToOne
+    private Producer producer;
 
     @NotNull(message = "Укажите цену товара!")
     @Positive(message = "Цена должна быть положительным числом!")
@@ -44,7 +44,7 @@ public class Product {
 
     @NotNull(message = "Приложите краткое описание товара!")
     @NotEmpty(message = "Приложите краткое описание товара!")
-    @Column(name = "desc")
+    @Column(name = "description")
     private String description;
 
     @NotNull(message = "Укажите состояние товара!")

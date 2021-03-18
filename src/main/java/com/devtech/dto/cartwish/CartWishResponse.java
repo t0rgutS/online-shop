@@ -22,7 +22,7 @@ public class CartWishResponse {
         this.productId = cartWish.getProduct().getId();
         this.userId = cartWish.getUser().getId();
         this.productName = cartWish.getProduct().getProductName();
-        this.producer = cartWish.getProduct().getProducer();
+        this.producer = cartWish.getProduct().getProducer().getProducerName();
         this.price = cartWish.getProduct().getPrice();
         this.count = cartWish.getCount();
     }
