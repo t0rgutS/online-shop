@@ -21,8 +21,8 @@ public class Country {
     @Column(name = "country_id")
     private Long id;
 
-    @NotNull
-    @NotEmpty
+    @NotNull(message = "Укажите название страны!")
+    @NotEmpty(message = "Укажите название страны!")
     @Column(name = "country")
     private String country;
 

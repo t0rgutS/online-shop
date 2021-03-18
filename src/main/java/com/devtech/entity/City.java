@@ -20,12 +20,12 @@ public class City {
     @Column(name = "city_id")
     private Long id;
 
-    @NotNull
-    @NotEmpty
+    @NotNull(message = "Укажите название города!")
+    @NotEmpty(message = "Укажите название города!")
     @Column(name = "city")
     private String city;
 
-    @NotNull
+    @NotNull(message = "Укажите страну!")
     @JoinColumn(name = "country_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private Country country;
