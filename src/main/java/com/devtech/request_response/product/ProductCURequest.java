@@ -1,8 +1,7 @@
-package com.devtech.dto.product;
+package com.devtech.request_response.product;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -20,5 +19,4 @@ public class ProductCURequest {
     private Boolean shipType;
     private Integer count;
     private String categoryName;
-    private String userLogin;
 }

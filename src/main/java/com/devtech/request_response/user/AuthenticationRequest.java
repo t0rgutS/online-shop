@@ -1,4 +1,4 @@
-package com.devtech.dto.user;
+package com.devtech.request_response.user;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

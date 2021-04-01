@@ -3,6 +3,7 @@ package com.devtech.service;
 import com.devtech.entity.Product;
 import com.devtech.entity.Rating;
 import com.devtech.entity.User;
+import com.devtech.exception.IncorrectSessionLoginException;
 import com.devtech.repository.ProductRepository;
 import com.devtech.repository.RatingRepository;
 import com.devtech.repository.UserRepository;
@@ -23,12 +24,14 @@ public class RatingService {
 
     public void rate(@NotNull Long productId, @NotNull Integer ratingValue) {
         Rating rating = ratingRepo.findByProduct_IdAndUser_Login(productId,
-                ((User) SecurityContextHolder.
+                ((User)SecurityContextHolder.
                         getContext().getAuthentication().getPrincipal()).getLogin()).orElse(null);
         if (rating == null) {
-            User user = userRepo.findByLogin(((User) SecurityContextHolder.
+            User user = userRepo.findByLogin(((User)SecurityContextHolder.
                     getContext().getAuthentication().getPrincipal()).getLogin()).orElseThrow(USER_NOT_FOUND);
             Product product = productRepo.findById(productId).orElseThrow(PRODUCT_NOT_FOUND);
+            if (product.getUser().getLogin().equals(user.getLogin()))
+                throw new IncorrectSessionLoginException("Вы не можете ставить оценки собственным товарам!");
             rating = new Rating();
             rating.setUser(user);
             rating.setProduct(product);
@@ -39,7 +42,7 @@ public class RatingService {
 
     public void delete(@NotNull Long productId) {
         Rating rating = ratingRepo.findByProduct_IdAndUser_Login(productId,
-                ((User) SecurityContextHolder.
+                ((User)SecurityContextHolder.
                         getContext().getAuthentication().getPrincipal()).getLogin()).orElseThrow(RATING_NOT_FOUND);
         ratingRepo.delete(rating);
     }

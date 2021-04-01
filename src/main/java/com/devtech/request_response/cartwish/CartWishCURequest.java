@@ -1,4 +1,4 @@
-package com.devtech.dto.cartwish;
+package com.devtech.request_response.cartwish;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,7 +8,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class CartWishCURequest {
-    private String login;
     private Long productId;
     private Integer count;
 }

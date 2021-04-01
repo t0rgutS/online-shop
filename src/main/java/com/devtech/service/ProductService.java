@@ -1,12 +1,11 @@
 package com.devtech.service;
 
-import com.devtech.dto.product.ProductCURequest;
-import com.devtech.dto.product.ProductResponse;
-import com.devtech.dto.product.ProductSearchRequest;
 import com.devtech.entity.*;
 import com.devtech.exception.IncorrectSessionLoginException;
 import com.devtech.exception.NoContactsException;
 import com.devtech.repository.*;
+import com.devtech.request_response.product.ProductCURequest;
+import com.devtech.request_response.product.ProductSearchRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
@@ -32,9 +31,10 @@ public class ProductService {
     private final RatingRepository ratingRepo;
     private final ProducerRepository producerRepo;
 
-    public ProductResponse create(@NotNull ProductCURequest request) {
+    public Product create(@NotNull ProductCURequest request) {
         Category category = categoryRepo.findByCategoryName(request.getCategoryName()).orElseThrow(CATEGORY_NOT_FOUND);
-        User user = userRepo.findByLogin(request.getUserLogin()).orElseThrow(USER_NOT_FOUND);
+        User user = userRepo.findByLogin(((User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getLogin()).orElseThrow(USER_NOT_FOUND);
         Producer producer = producerRepo.findByProducerName(request.getProducer()).orElse(null);
         if (producer == null) {
             producer = new Producer();
@@ -58,11 +58,14 @@ public class ProductService {
         product.setCategory(category);
         product.setUser(user);
         productRepo.save(product);
-        return new ProductResponse(product);
+        return product;
     }
 
-    public ProductResponse update(@NotNull Long id, @NotNull ProductCURequest request) {
+    public Product update(@NotNull Long id, @NotNull ProductCURequest request) {
         Product product = productRepo.findById(id).orElseThrow(PRODUCT_NOT_FOUND);
+        if (!product.getUser().getLogin().equals(((User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getLogin()))
+            throw new IncorrectSessionLoginException("Вы не можете редактировать чужой товар!");
         if (request.getCategoryName() != null && !request.getCategoryName().isEmpty()) {
             Category category = categoryRepo.findByCategoryName(request.getCategoryName()).orElseThrow(CATEGORY_NOT_FOUND);
             product.setCategory(category);
@@ -95,19 +98,34 @@ public class ProductService {
         if (request.getCount() != null)
             product.setCount(request.getCount());
         productRepo.save(product);
-        return new ProductResponse(product);
+        return product;
     }
 
-    public ProductResponse get(@NotNull Long id) {
-        Rating rating = ratingRepo.findByProduct_IdAndUser_Login(id, ((User) SecurityContextHolder.
-                getContext().getAuthentication().getPrincipal()).getLogin()).orElse(null);
-        if (rating != null)
-            return new ProductResponse(productRepo.findById(id).orElseThrow(PRODUCT_NOT_FOUND));
+    public Product get(@NotNull Long id) {
+        Rating rating;
+        if (SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User)
+            rating = ratingRepo.findByProduct_IdAndUser_Login(id, ((User) SecurityContextHolder.
+                    getContext().getAuthentication().getPrincipal()).getLogin()).orElse(null);
         else
-            return new ProductResponse(productRepo.findById(id).orElseThrow(PRODUCT_NOT_FOUND), rating.getRating());
+            rating = null;
+        Product product;
+        if (rating != null) {
+            product = rating.getProduct();
+            product.setRating(rating.getRating());
+        } else {
+            product = productRepo.findById(id).orElseThrow(PRODUCT_NOT_FOUND);
+            product.setRating(0);
+        }
+        if (SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User)
+            if (product.getUser().getLogin().equals(((User) SecurityContextHolder.
+                    getContext().getAuthentication().getPrincipal()).getLogin()))
+                product.setEditable(true);
+        return product;
     }
 
-    public Page<ProductResponse> getAll(@NotNull ProductSearchRequest request) {
+    public Page<Product> getAll(@NotNull ProductSearchRequest request) {
         return productRepo.findAll(new Specification<Product>() {
             @Nullable
             @Override
@@ -125,6 +143,16 @@ public class ProductService {
                                     )
                             )
                     );
+                }
+                if (request.isCurrentUser()) {
+                    if (SecurityContextHolder.
+                            getContext().getAuthentication().getPrincipal() instanceof User)
+                        if (predicate == null)
+                            predicate = builder.equal(root.get("user").get("login"), ((User) SecurityContextHolder.
+                                    getContext().getAuthentication().getPrincipal()).getLogin());
+                        else
+                            predicate = builder.and(predicate, builder.equal(root.get("user").get("login"), ((User) SecurityContextHolder.
+                                    getContext().getAuthentication().getPrincipal()).getLogin()));
                 }
                 if (request.getCondition() != null) {
                     if (predicate == null)
@@ -192,15 +220,15 @@ public class ProductService {
                 }
                 return predicate;
             }
-        }, request.pageable()).map(ProductResponse::new);
+        }, request.pageable());
     }
 
-    public ProductResponse delete(@Valid Long id) {
+    public Product delete(@Valid Long id) {
         Product product = productRepo.findById(id).orElseThrow(PRODUCT_NOT_FOUND);
         if (!product.getUser().getLogin().equals(((User) SecurityContextHolder.
                 getContext().getAuthentication().getPrincipal()).getLogin()))
             throw new IncorrectSessionLoginException("Вы не можете удалить чужой товар!");
         productRepo.delete(product);
-        return new ProductResponse(product);
+        return product;
     }
 }

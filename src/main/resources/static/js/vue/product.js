@@ -5,7 +5,7 @@ var product = new Vue({
     '<template v-if="product != null">' +
     '<div class="d-flex mt-5">' +
     '    <div>' +
-    '        <img src="{{ product.photoURL }}" class="img-fluid ml-3 mr-5"/>' +
+    '        <img :src="product.photoURL" alt="Картинки нет..." class="img-fluid ml-3 mr-5"/>' +
     '    </div>' +
     '    <div class="form-group ml-5 mr-5">' +
     '        <fieldset>' +

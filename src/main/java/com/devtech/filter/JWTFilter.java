@@ -1,6 +1,7 @@
-package com.devtech.jwt;
+package com.devtech.filter;
 
 import com.devtech.entity.User;
+import com.devtech.jwt.JWTProvider;
 import com.devtech.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,6 +15,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.ArrayList;
 
 @Component
 @RequiredArgsConstructor
@@ -32,7 +34,7 @@ public class JWTFilter extends GenericFilterBean {
                     User user = userRepo.findByLogin(provider.getLogin(token)).orElse(null);
                     if (user != null) {
                         UsernamePasswordAuthenticationToken authToken
-                                = new UsernamePasswordAuthenticationToken(user, null);
+                                = new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                     }
                 }

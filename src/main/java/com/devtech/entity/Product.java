@@ -44,7 +44,7 @@ public class Product {
 
     @NotNull(message = "Приложите краткое описание товара!")
     @NotEmpty(message = "Приложите краткое описание товара!")
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
     @NotNull(message = "Укажите состояние товара!")
@@ -69,4 +69,10 @@ public class Product {
     @JoinColumn(name = "user_id")
     @ManyToOne
     private User user;
+
+    @Transient
+    private Boolean editable = false;
+
+    @Transient
+    private Integer rating = 0;
 }

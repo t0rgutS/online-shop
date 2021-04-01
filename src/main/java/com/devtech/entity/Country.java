@@ -1,5 +1,6 @@
 package com.devtech.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,6 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
+@JsonIgnoreProperties(value = {"cities"})
 public class Country {
     @Id
     @NotNull(message = "Укажите идентификатор записи!")
@@ -26,6 +28,6 @@ public class Country {
     @Column(name = "country")
     private String country;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "city")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "country")
     private List<City> cities;
 }

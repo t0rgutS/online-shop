@@ -1,8 +1,5 @@
 package com.devtech.service;
 
-import com.devtech.dto.cartwish.CartWishCURequest;
-import com.devtech.dto.cartwish.CartWishResponse;
-import com.devtech.dto.product.ProductSearchRequest;
 import com.devtech.entity.CartWish;
 import com.devtech.entity.Product;
 import com.devtech.entity.User;
@@ -13,6 +10,8 @@ import com.devtech.exception.NoProductsLeftException;
 import com.devtech.repository.CartWishRepository;
 import com.devtech.repository.ProductRepository;
 import com.devtech.repository.UserRepository;
+import com.devtech.request_response.cartwish.CartWishCURequest;
+import com.devtech.request_response.product.ProductSearchRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
@@ -35,11 +34,9 @@ public class CartWishService {
     private final UserRepository userRepo;
     private final ProductRepository productRepo;
 
-    public CartWishResponse create(@NotNull CartWishCURequest request) {
-        if (!((User) SecurityContextHolder.
-                getContext().getAuthentication().getPrincipal()).getLogin().equals(request.getLogin()))
-            throw new IncorrectSessionLoginException("Нет доступа!");
-        User user = userRepo.findByLogin(request.getLogin()).orElseThrow(USER_NOT_FOUND);
+    public CartWish create(@NotNull CartWishCURequest request) {
+        User user = userRepo.findByLogin(((User)SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getLogin()).orElseThrow(USER_NOT_FOUND);
         Product product = productRepo.findById(request.getProductId()).orElseThrow(PRODUCT_NOT_FOUND);
         if (product.getUser().equals(user))
             throw new AddingYourOwnProductException();
@@ -52,12 +49,12 @@ public class CartWishService {
         product.setCount(product.getCount() - request.getCount());
         productRepo.save(product);
         cartWishRepo.save(cartWish);
-        return new CartWishResponse(cartWish);
+        return cartWish;
     }
 
-    public CartWishResponse update(@NotNull Long id, @NotNull CartWishCURequest request) {
+    public CartWish update(@NotNull Long id, @NotNull CartWishCURequest request) {
         CartWish cartWish = cartWishRepo.findById(id).orElseThrow(BUCKET_NOT_FOUND);
-        if (!((User) SecurityContextHolder.
+        if (!((User)SecurityContextHolder.
                 getContext().getAuthentication().getPrincipal()).getLogin().equals(cartWish.getUser().getLogin()))
             throw new IncorrectSessionLoginException("Нет доступа!");
         if (request.getCount() != null) {
@@ -75,22 +72,22 @@ public class CartWishService {
             else
                 throw new BucketCountException("Ошибка: товар в желаемом должен иметь 0 в поле \"Количество\"!");
         }
-        return new CartWishResponse(cartWish);
+        return cartWish;
     }
 
-    public CartWishResponse delete(@NotNull Long id) {
+    public CartWish delete(@NotNull Long id) {
         CartWish cartWish = cartWishRepo.findById(id).orElseThrow(BUCKET_NOT_FOUND);
-        if (!cartWish.getUser().getLogin().equals(((User) SecurityContextHolder.
+        if (!cartWish.getUser().getLogin().equals(((User)SecurityContextHolder.
                 getContext().getAuthentication().getPrincipal()).getLogin()))
             throw new IncorrectSessionLoginException("Нет доступа!");
         Product product = cartWish.getProduct();
         product.setCount(product.getCount() + cartWish.getCount());
         productRepo.save(product);
         cartWishRepo.delete(cartWish);
-        return new CartWishResponse(cartWish);
+        return cartWish;
     }
 
-    public Page<CartWishResponse> getAll(ProductSearchRequest request, Boolean wishList) {
+    public Page<CartWish> getAll(ProductSearchRequest request, Boolean wishList) {
         return cartWishRepo.findAll(new Specification<CartWish>() {
             @Nullable
             @Override
@@ -168,6 +165,6 @@ public class CartWishService {
                 }
                 return predicate;
             }
-        }, request.pageable()).map(CartWishResponse::new);
+        }, request.pageable());
     }
 }

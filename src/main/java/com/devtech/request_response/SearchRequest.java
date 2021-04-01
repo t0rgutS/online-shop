@@ -1,4 +1,4 @@
-package com.devtech.dto;
+package com.devtech.request_response;
 
 import lombok.Getter;
 import lombok.Setter;

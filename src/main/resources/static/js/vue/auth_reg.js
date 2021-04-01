@@ -3,7 +3,8 @@ Vue.use(VueSession);
 var authReg = new Vue({
     el: '#authReg',
     template:
-    '<template v-if="showReg">' +
+    '<div>' +
+    '<div v-if="showReg">' +
     '<div class="mt-5 ml-auto mr-auto w-25">' +
     '<h5 class="font-weight-bolder text-center">РЕГИСТРАЦИЯ</h5>' +
     '<div class="form-group">' +
@@ -16,13 +17,13 @@ var authReg = new Vue({
     '<div class="form-group">' +
     '<p><small>&#9745;</small> Подтверждение пароля: <input class="form-control" type="password" v-model="confirm"></p>' +
     '</div>' +
-    '<div class="form-group">' +
+    '<!--div class="form-group">' +
     '<p>Фамилия: <input class="form-control" v-model="surname"></p>' +
-    '</div>' +
+    '</div-->' +
     '<div class="form-group">' +
-    '<p><small>&#9745;</small> Имя: <input class="form-control" v-model="name"></p>' +
+    '<p><small>&#9745;</small> Имя в системе: <input class="form-control" v-model="name"></p>' +
     '</div>' +
-    '<div class="form-group">' +
+    '<!--div class="form-group">' +
     '<p>Отчество: <input class="form-control" v-model="patronymic"></p>' +
     '</div>' +
     '<div class="form-group">' +
@@ -33,11 +34,12 @@ var authReg = new Vue({
     '<option value="" selected>Не выбрано</option>' +
     '<option value="true">Мужской</option>' +
     '<option value="false">Женский</option>' +
-    '</select></p>' +
+    '</select></p-->' +
     '<div class="form-group">' +
     '<p>Город: <select class="form-control" v-model="city">' +
     '<option value="" selected>Не выбрано</option> ' +
     '</select></p>' +
+    '</div>' +
     '<div class="form-group">' +
     '<p>Телефон: <input class="form-control" type="tel" v-model="phone"></p>' +
     '</div>' +
@@ -54,8 +56,8 @@ var authReg = new Vue({
     '</div>' +
     '<!--/div-->' +
     '</div>' +
-    '</template>' +
-    '<template v-else>' +
+    '</div>' +
+    '<div v-else>' +
     '<div class="mt-5 ml-auto mr-auto w-25">' +
     '<h5 class="font-weight-bolder text-center mb-3">АВТОРИЗАЦИЯ</h5>' +
     '<div class="form-group">' +
@@ -69,18 +71,19 @@ var authReg = new Vue({
     '<button class="btn btn-dark" v-on:click="showReg = true">Зарегистрироваться</button>' +
     '</div>' +
     '</div>' +
-    '</template>',
+    '</div>' +
+    '</div>',
     data: function () {
         return {
             showReg: false,
             login: '',
             password: '',
             confirm: '',
-            surname: '',
+            //surname: '',
             name: '',
-            patronymic: '',
-            birthDate: '',
-            gender: '',
+            //patronymic: '',
+            //birthDate: '',
+            //gender: '',
             city: '',
             phone: '',
             email: '',
@@ -89,6 +92,26 @@ var authReg = new Vue({
     },
     methods: {
         authorize: function () {
+            var data = new FormData();
+            data.append('login', this.login);
+            data.append('password', this.password);
+            this.$http.post('http://localhost:8080/api/users/auth', {
+			login: this.login,
+			password: this.password
+		}).then((response) => {
+		    if(response.ok) {
+			this.$session.start();
+			this.$session.set('login', response.body.login);
+			this.$session.set('token', response.body.token);
+			if(window.history.length > 0)
+				window.history.go(-1);
+			else
+				window.location.href='index.html';
+		    }
+                    console.log(response)
+                }, (error) => {
+                    console.log(error)
+            });
             //this.$session.start();
         },
         register: function () {
