@@ -24,7 +24,7 @@ public class ProductController {
         return service.create(request);
     }
 
-    @RequestMapping(value = "/update/{id}", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
     public Product update(@PathVariable Long id, @Valid ProductCURequest request) {
         return service.update(id, request);
     }

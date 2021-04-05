@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 @RestController
 @CrossOrigin
@@ -34,14 +36,19 @@ public class UserController {
         return service.create(request);
     }
 
-    @RequestMapping(value = "/update/{id}", method = RequestMethod.PATCH)
-    public User update(@PathVariable Long id, @Valid UserCURequest request) {
-        return service.update(id, request);
+    @RequestMapping(value = "/update", method = RequestMethod.PUT)
+    public User update(@Valid UserCURequest request) {
+        return service.update(request);
     }
 
-    @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
-    public User delete(@PathVariable Long id) {
-        return service.delete(id);
+    @RequestMapping(value = "/changepass", method = RequestMethod.PUT)
+    public User changePass(@NotNull @NotEmpty String newPassword) {
+        return service.changePassword(newPassword);
+    }
+
+    @RequestMapping(value = "/delete", method = RequestMethod.DELETE)
+    public User delete() {
+        return service.delete();
     }
 
     @RequestMapping(value = "/get/{login}", method = RequestMethod.GET)

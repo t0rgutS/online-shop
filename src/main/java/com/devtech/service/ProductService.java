@@ -3,14 +3,17 @@ package com.devtech.service;
 import com.devtech.entity.*;
 import com.devtech.exception.IncorrectSessionLoginException;
 import com.devtech.exception.NoContactsException;
+import com.devtech.exception.NotAuthroizedException;
 import com.devtech.repository.*;
 import com.devtech.request_response.product.ProductCURequest;
 import com.devtech.request_response.product.ProductSearchRequest;
+import com.devtech.utility.MultipartFileUploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -19,6 +22,8 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+
+import java.util.List;
 
 import static com.devtech.exception.ExceptionList.*;
 
@@ -30,8 +35,13 @@ public class ProductService {
     private final UserRepository userRepo;
     private final RatingRepository ratingRepo;
     private final ProducerRepository producerRepo;
+    private final MultipartFileUploader uploader;
 
+    @Transactional
     public Product create(@NotNull ProductCURequest request) {
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
         Category category = categoryRepo.findByCategoryName(request.getCategoryName()).orElseThrow(CATEGORY_NOT_FOUND);
         User user = userRepo.findByLogin(((User) SecurityContextHolder.
                 getContext().getAuthentication().getPrincipal()).getLogin()).orElseThrow(USER_NOT_FOUND);
@@ -48,7 +58,7 @@ public class ProductService {
             throw new NoContactsException();
         Product product = new Product();
         product.setProductName(request.getProductName());
-        product.setPhotoURL(request.getPhotoURL());
+        product.setPhotoURL(uploader.uploadFile(request.getPhoto()));
         product.setProducer(producer);
         product.setPrice(request.getPrice());
         product.setDescription(request.getDescription());
@@ -61,7 +71,11 @@ public class ProductService {
         return product;
     }
 
+    @Transactional
     public Product update(@NotNull Long id, @NotNull ProductCURequest request) {
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
         Product product = productRepo.findById(id).orElseThrow(PRODUCT_NOT_FOUND);
         if (!product.getUser().getLogin().equals(((User) SecurityContextHolder.
                 getContext().getAuthentication().getPrincipal()).getLogin()))
@@ -76,8 +90,8 @@ public class ProductService {
         }*/
         if (request.getProductName() != null && !request.getProductName().isEmpty())
             product.setProductName(request.getProductName());
-        if (request.getPhotoURL() != null && !request.getPhotoURL().isEmpty())
-            product.setPhotoURL(request.getPhotoURL());
+        if (request.getPhoto() != null)
+            product.setPhotoURL(uploader.uploadFile(request.getPhoto()));
         if (request.getProducer() != null && !request.getProducer().isEmpty()) {
             Producer producer = producerRepo.findByProducerName(request.getProducer()).orElse(null);
             if (producer == null) {
@@ -115,7 +129,10 @@ public class ProductService {
             product.setRating(rating.getRating());
         } else {
             product = productRepo.findById(id).orElseThrow(PRODUCT_NOT_FOUND);
-            product.setRating(0);
+            List<Rating> ratings = ratingRepo.findAllByProduct_Id(product.getId());
+            if (ratings.size() > 0)
+                product.setRating((int) Math.round(ratings.stream().mapToDouble(Rating::getRating).sum()
+                        / ratings.size()));
         }
         if (SecurityContextHolder.
                 getContext().getAuthentication().getPrincipal() instanceof User)
@@ -224,6 +241,9 @@ public class ProductService {
     }
 
     public Product delete(@Valid Long id) {
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
         Product product = productRepo.findById(id).orElseThrow(PRODUCT_NOT_FOUND);
         if (!product.getUser().getLogin().equals(((User) SecurityContextHolder.
                 getContext().getAuthentication().getPrincipal()).getLogin()))

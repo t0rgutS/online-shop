@@ -4,6 +4,7 @@ import com.devtech.entity.Product;
 import com.devtech.entity.Rating;
 import com.devtech.entity.User;
 import com.devtech.exception.IncorrectSessionLoginException;
+import com.devtech.exception.NotAuthroizedException;
 import com.devtech.repository.ProductRepository;
 import com.devtech.repository.RatingRepository;
 import com.devtech.repository.UserRepository;
@@ -23,6 +24,9 @@ public class RatingService {
     private final ProductRepository productRepo;
 
     public void rate(@NotNull Long productId, @NotNull Integer ratingValue) {
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
         Rating rating = ratingRepo.findByProduct_IdAndUser_Login(productId,
                 ((User)SecurityContextHolder.
                         getContext().getAuthentication().getPrincipal()).getLogin()).orElse(null);
@@ -41,6 +45,9 @@ public class RatingService {
     }
 
     public void delete(@NotNull Long productId) {
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
         Rating rating = ratingRepo.findByProduct_IdAndUser_Login(productId,
                 ((User)SecurityContextHolder.
                         getContext().getAuthentication().getPrincipal()).getLogin()).orElseThrow(RATING_NOT_FOUND);

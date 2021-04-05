@@ -4,6 +4,8 @@ import com.devtech.entity.City;
 import com.devtech.entity.Rating;
 import com.devtech.entity.User;
 import com.devtech.exception.IncorrectSessionLoginException;
+import com.devtech.exception.NotAuthroizedException;
+import com.devtech.exception.UserAlreadyExistsException;
 import com.devtech.repository.CityRepository;
 import com.devtech.repository.RatingRepository;
 import com.devtech.repository.UserRepository;
@@ -11,9 +13,11 @@ import com.devtech.request_response.user.UserCURequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -31,58 +35,58 @@ public class UserService {
     private final RatingRepository ratingRepo;
 
     public User create(@NotNull UserCURequest request) {
-        User user = new User();
-        //  if (LocalDate.now().getYear() - Instant.ofEpochMilli(request.getBirthDate())
-        //          .atZone(ZoneId.systemDefault()).toLocalDate().getYear() < 16)
-        //      throw new TooYoungUserException();
-        City city = cityRepo.findByCityAndCountry_Country(request.getCityName(),
-                request.getCountryName()).orElseThrow(CITY_NOT_FOUND);
-        user.setLogin(request.getLogin());
-        user.setPassword(encoder.encode(request.getPassword()));
-        // user.setSurname(request.getSurname());
-        user.setName(request.getName());
-        // user.setPatronymic(request.getPatronymic());
-        // user.setBirthDate(request.getBirthDate());
-        // user.setGender(request.getGender());
-        user.setCity(city);
-        user.setPhone(request.getPhone());
-        user.setEmail(request.getEmail());
-        // user.setOrganization(request.getOrganization());
-        userRepo.save(user);
-        return user;
+        User user = userRepo.findByLogin(request.getLogin()).orElse(null);
+        if (user == null) {
+            //  if (LocalDate.now().getYear() - Instant.ofEpochMilli(request.getBirthDate())
+            //          .atZone(ZoneId.systemDefault()).toLocalDate().getYear() < 16)
+            //      throw new TooYoungUserException();
+            City city = cityRepo.findByCityAndCountry_Country(request.getCityName(),
+                    request.getCountryName()).orElseThrow(CITY_NOT_FOUND);
+            user.setLogin(request.getLogin());
+            user.setPassword(encoder.encode(request.getPassword()));
+            // user.setSurname(request.getSurname());
+            user.setName(request.getName());
+            // user.setPatronymic(request.getPatronymic());
+            // user.setBirthDate(request.getBirthDate());
+            // user.setGender(request.getGender());
+            user.setCity(city);
+            user.setPhone(request.getPhone());
+            user.setEmail(request.getEmail());
+            // user.setOrganization(request.getOrganization());
+            userRepo.save(user);
+            return user;
+        } else throw new UserAlreadyExistsException(request.getLogin());
     }
 
-    public User update(@NotNull Long id, @NotNull UserCURequest request) {
-        User user = userRepo.findById(id).orElseThrow(USER_NOT_FOUND);
-        if (!user.getLogin().equals(((User) SecurityContextHolder.
-                getContext().getAuthentication().getPrincipal()).getLogin()))
-            throw new IncorrectSessionLoginException("Вы не можете редактировать чужой профиль!");
+    @Transactional
+    public User update(@NotNull UserCURequest request) {
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
+        User user = userRepo.findById(((User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getId()).orElseThrow(USER_NOT_FOUND);
         if (request.getCityName() != null && !request.getCityName().isEmpty()) {
             City city = cityRepo.findByCityAndCountry_Country(request.getCityName(),
                     request.getCountryName()).orElseThrow(CITY_NOT_FOUND);
             user.setCity(city);
         }
-       /* if (request.getBirthDate() != null) {
-            if (LocalDate.now().getYear() - Instant.ofEpochMilli(request.getBirthDate())
-                    .atZone(ZoneId.systemDefault()).toLocalDate().getYear() < 16)
-                throw new TooYoungUserException();
-            user.setBirthDate(request.getBirthDate());
-        }*/
-        if (request.getPassword() != null && !request.getPassword().isEmpty())
-            user.setPassword(encoder.encode(request.getPassword()));
-        // if (request.getSurname() != null && !request.getSurname().isEmpty())
-        //     user.setSurname(request.getSurname());
         if (request.getName() != null && !request.getName().isEmpty())
             user.setName(request.getName());
-        // if (request.getPatronymic() != null && !request.getPatronymic().isEmpty())
-        //     user.setPatronymic(request.getPatronymic());
         if (request.getPhone() != null && !request.getPhone().isEmpty())
             user.setPhone(request.getPhone());
         if (request.getEmail() != null && !request.getEmail().isEmpty())
             user.setEmail(request.getEmail());
-        // if (request.getGender() != null)
-        //   user.setGender(request.getGender());
         userRepo.save(user);
+        return user;
+    }
+
+    public User changePassword(@NotNull @NotEmpty String newPassword) {
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
+        User user = userRepo.findById(((User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getId()).orElseThrow(USER_NOT_FOUND);
+        user.setPassword(encoder.encode(newPassword));
         return user;
     }
 
@@ -108,11 +112,12 @@ public class UserService {
         return true;
     }
 
-    public User delete(@NotNull Long id) {
-        User user = userRepo.findById(id).orElseThrow(USER_NOT_FOUND);
-        if (!user.getLogin().equals(((User) SecurityContextHolder.
-                getContext().getAuthentication().getPrincipal()).getLogin()))
-            throw new IncorrectSessionLoginException("Вы не можете удалить чужой аккаунт!");
+    public User delete() {
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
+        User user = userRepo.findById(((User) SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal()).getId()).orElseThrow(USER_NOT_FOUND);
         userRepo.delete(user);
         return user;
     }

@@ -10,5 +10,7 @@ import java.util.Optional;
 public interface RatingRepository extends JpaRepository<Rating, Long>, JpaSpecificationExecutor<Rating> {
     List<Rating> findAllByProduct_User_Login(String userLogin);
 
+    List<Rating> findAllByProduct_Id(Long id);
+
     Optional<Rating> findByProduct_IdAndUser_Login(Long productId, String userLogin);
 }

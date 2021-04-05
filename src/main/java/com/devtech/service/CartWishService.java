@@ -3,10 +3,7 @@ package com.devtech.service;
 import com.devtech.entity.CartWish;
 import com.devtech.entity.Product;
 import com.devtech.entity.User;
-import com.devtech.exception.AddingYourOwnProductException;
-import com.devtech.exception.BucketCountException;
-import com.devtech.exception.IncorrectSessionLoginException;
-import com.devtech.exception.NoProductsLeftException;
+import com.devtech.exception.*;
 import com.devtech.repository.CartWishRepository;
 import com.devtech.repository.ProductRepository;
 import com.devtech.repository.UserRepository;
@@ -17,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -34,34 +32,58 @@ public class CartWishService {
     private final UserRepository userRepo;
     private final ProductRepository productRepo;
 
+    public boolean check(@NotNull Long productId, boolean wishlist) {
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
+        if (wishlist)
+            return cartWishRepo.existsByUserAndProduct_Id(((User) SecurityContextHolder.
+                            getContext().getAuthentication().getPrincipal()), productId, (CartWish cw) -> cw.getCount() == 0);
+        else
+            return cartWishRepo.existsByUserAndProduct_Id(((User) SecurityContextHolder.
+                    getContext().getAuthentication().getPrincipal()), productId, (CartWish cw) -> cw.getCount() > 0);
+    }
+
+    @Transactional
     public CartWish create(@NotNull CartWishCURequest request) {
-        User user = userRepo.findByLogin(((User)SecurityContextHolder.
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
+        User user = userRepo.findByLogin(((User) SecurityContextHolder.
                 getContext().getAuthentication().getPrincipal()).getLogin()).orElseThrow(USER_NOT_FOUND);
         Product product = productRepo.findById(request.getProductId()).orElseThrow(PRODUCT_NOT_FOUND);
         if (product.getUser().equals(user))
             throw new AddingYourOwnProductException();
         if (product.getCount() - request.getCount() < 0)
             throw new NoProductsLeftException();
-        CartWish cartWish = new CartWish();
-        cartWish.setUser(user);
-        cartWish.setProduct(product);
-        cartWish.setCount(request.getCount());
+        CartWish cartWish = cartWishRepo.findByUserAndProduct(user, product).orElse(null);
+        if (cartWish == null) {
+            cartWish = new CartWish();
+            cartWish.setUser(user);
+            cartWish.setProduct(product);
+            cartWish.setCount(request.getCount());
+        } else
+            cartWish.setCount(cartWish.getCount() + request.getCount());
         product.setCount(product.getCount() - request.getCount());
         productRepo.save(product);
         cartWishRepo.save(cartWish);
         return cartWish;
     }
 
+    @Transactional
     public CartWish update(@NotNull Long id, @NotNull CartWishCURequest request) {
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
         CartWish cartWish = cartWishRepo.findById(id).orElseThrow(BUCKET_NOT_FOUND);
-        if (!((User)SecurityContextHolder.
+        if (!((User) SecurityContextHolder.
                 getContext().getAuthentication().getPrincipal()).getLogin().equals(cartWish.getUser().getLogin()))
             throw new IncorrectSessionLoginException("Нет доступа!");
         if (request.getCount() != null) {
             if (!((request.getCount() > 0 && cartWish.getCount() == 0)
                     || (request.getCount() == 0 && cartWish.getCount() > 0))) {
                 Product product = cartWish.getProduct();
-                if (product.getCount() + cartWish.getCount() - request.getCount() < 0)
+                if (product.getCount() - request.getCount() < 0)
                     throw new NoProductsLeftException();
                 cartWish.setCount(request.getCount());
                 product.setCount(product.getCount() + cartWish.getCount() - request.getCount());
@@ -76,8 +98,11 @@ public class CartWishService {
     }
 
     public CartWish delete(@NotNull Long id) {
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
         CartWish cartWish = cartWishRepo.findById(id).orElseThrow(BUCKET_NOT_FOUND);
-        if (!cartWish.getUser().getLogin().equals(((User)SecurityContextHolder.
+        if (!cartWish.getUser().getLogin().equals(((User) SecurityContextHolder.
                 getContext().getAuthentication().getPrincipal()).getLogin()))
             throw new IncorrectSessionLoginException("Нет доступа!");
         Product product = cartWish.getProduct();
@@ -88,6 +113,9 @@ public class CartWishService {
     }
 
     public Page<CartWish> getAll(ProductSearchRequest request, Boolean wishList) {
+        if (!(SecurityContextHolder.
+                getContext().getAuthentication().getPrincipal() instanceof User))
+            throw new NotAuthroizedException();
         return cartWishRepo.findAll(new Specification<CartWish>() {
             @Nullable
             @Override
