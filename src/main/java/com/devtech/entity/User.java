@@ -19,7 +19,6 @@ import java.util.List;
 @JsonIgnoreProperties(value = {"sold", "password"})
 public class User {
     @Id
-    @NotNull(message = "Укажите идентификатор записи!")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private Long id;

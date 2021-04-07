@@ -15,7 +15,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class Product {
     @Id
-    @NotNull(message = "Укажите идентификатор записи!")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id")
     private Long id;

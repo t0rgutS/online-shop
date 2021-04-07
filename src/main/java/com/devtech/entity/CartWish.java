@@ -15,7 +15,6 @@ import javax.validation.constraints.PositiveOrZero;
 @NoArgsConstructor
 public class CartWish {
     @Id
-    @NotNull(message = "Укажите идентификатор записи!")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cartwish_id")
     private Long id;

@@ -4,8 +4,11 @@ import com.devtech.entity.City;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CityRepository extends JpaRepository<City, Long>, JpaSpecificationExecutor<City> {
     Optional<City> findByCityAndCountry_Country(String city, String country);
+
+    List<City> findAllByCountry_Country(String country);
 }

@@ -37,11 +37,13 @@ public class CartWishService {
                 getContext().getAuthentication().getPrincipal() instanceof User))
             throw new NotAuthroizedException();
         if (wishlist)
-            return cartWishRepo.existsByUserAndProduct_Id(((User) SecurityContextHolder.
-                            getContext().getAuthentication().getPrincipal()), productId, (CartWish cw) -> cw.getCount() == 0);
+            return cartWishRepo.findOne((r, q, b) ->
+                    b.and(b.and(b.equal(r.get("product").get("id"), productId), b.equal(r.get("user"), (User) SecurityContextHolder.
+                            getContext().getAuthentication().getPrincipal())), b.equal(r.get("count"), 0))).isPresent();
         else
-            return cartWishRepo.existsByUserAndProduct_Id(((User) SecurityContextHolder.
-                    getContext().getAuthentication().getPrincipal()), productId, (CartWish cw) -> cw.getCount() > 0);
+            return cartWishRepo.findOne((r, q, b) ->
+                    b.and(b.and(b.equal(r.get("product").get("id"), productId), b.equal(r.get("user"), (User) SecurityContextHolder.
+                            getContext().getAuthentication().getPrincipal())), b.greaterThan(r.get("count"), 0))).isPresent();
     }
 
     @Transactional
@@ -190,6 +192,10 @@ public class CartWishService {
                         }
                     } else countPredicate = builder.equal(root.get("product").get("price"), request.getPrice());
                     predicate = builder.and(predicate, countPredicate);
+                }
+                if (request.getCategory() != null && !request.getCategory().isEmpty()) {
+                    predicate = builder.and(predicate,
+                            builder.equal(root.get("category").get("categoryName"), request.getCategory()));
                 }
                 return predicate;
             }

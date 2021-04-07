@@ -12,7 +12,5 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 public interface CartWishRepository extends JpaRepository<CartWish, Long>, JpaSpecificationExecutor<CartWish> {
-    boolean existsByUserAndProduct_Id(User user, Long productId, Predicate<CartWish> predicate);
-
     Optional<CartWish> findByUserAndProduct(User user, Product product);
 }

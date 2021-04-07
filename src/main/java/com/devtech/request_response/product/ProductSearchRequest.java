@@ -19,6 +19,7 @@ public class ProductSearchRequest extends SearchRequest {
     private Boolean shipType;
     private String countOp;
     private Integer count;
+    private String category;
     private boolean currentUser = false;
 
     public void setPriceOp(String priceOp) throws IncorrectOperatorException {

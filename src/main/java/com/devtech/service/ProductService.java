@@ -235,6 +235,13 @@ public class ProductService {
                     else
                         predicate = builder.and(predicate, countPredicate);
                 }
+                if (request.getCategory() != null && !request.getCategory().isEmpty()) {
+                    if (predicate == null)
+                        predicate = builder.equal(root.get("category").get("categoryName"), request.getCategory());
+                    else
+                        predicate = builder.and(predicate,
+                                builder.equal(root.get("category").get("categoryName"), request.getCategory()));
+                }
                 return predicate;
             }
         }, request.pageable());

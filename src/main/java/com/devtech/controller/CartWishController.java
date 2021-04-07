@@ -20,28 +20,22 @@ public class CartWishController {
     private final CartWishService service;
 
     @RequestMapping(value = "/check/wishlist/{productId}", method = RequestMethod.GET)
-    public ResponseEntity checkWishList(@PathVariable Long productId) {
-        if (service.check(productId, true))
-            return new ResponseEntity(HttpStatus.OK);
-        else
-            return new ResponseEntity(HttpStatus.NOT_FOUND);
+    public ResponseEntity<Boolean> checkWishList(@PathVariable Long productId) {
+        return new ResponseEntity<Boolean>(service.check(productId, true), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/check/cart/{productId}", method = RequestMethod.GET)
-    public ResponseEntity checkCart(@PathVariable Long productId) {
-        if (service.check(productId, false))
-            return new ResponseEntity(HttpStatus.OK);
-        else
-            return new ResponseEntity(HttpStatus.NOT_FOUND);
+    public ResponseEntity<Boolean> checkCart(@PathVariable Long productId) {
+        return new ResponseEntity<Boolean>(service.check(productId, false), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/create", method = RequestMethod.POST)
-    public CartWish create(@NotNull CartWishCURequest request) {
+    public CartWish create(@RequestBody @NotNull CartWishCURequest request) {
         return service.create(request);
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
-    public CartWish update(@PathVariable Long id, @NotNull CartWishCURequest request) {
+    public CartWish update(@PathVariable Long id, @RequestBody @NotNull CartWishCURequest request) {
         return service.update(id, request);
     }
 
@@ -57,6 +51,6 @@ public class CartWishController {
 
     @RequestMapping(value = "wishlist", method = RequestMethod.GET)
     public Page<CartWish> getWishList(@NotNull ProductSearchRequest request) {
-        return service.getAll(request, false);
+        return service.getAll(request, true);
     }
 }

@@ -15,7 +15,6 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 public class City {
     @Id
-    @NotNull(message = "Укажите идентификатор записи!")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "city_id")
     private Long id;

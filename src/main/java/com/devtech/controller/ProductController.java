@@ -20,12 +20,12 @@ public class ProductController {
     private final RatingService ratingService;
 
     @RequestMapping(value = "/create", method = RequestMethod.POST)
-    public Product create(@Valid ProductCURequest request) {
+    public Product create(@RequestBody @Valid ProductCURequest request) {
         return service.create(request);
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
-    public Product update(@PathVariable Long id, @Valid ProductCURequest request) {
+    public Product update(@PathVariable Long id, @RequestBody @Valid ProductCURequest request) {
         return service.update(id, request);
     }
 

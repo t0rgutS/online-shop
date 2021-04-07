@@ -18,7 +18,6 @@ import java.util.List;
 @JsonIgnoreProperties(value = {"cities"})
 public class Country {
     @Id
-    @NotNull(message = "Укажите идентификатор записи!")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "country_id")
     private Long id;

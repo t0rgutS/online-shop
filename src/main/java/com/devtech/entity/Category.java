@@ -18,7 +18,6 @@ import java.util.List;
 @JsonIgnoreProperties(value = {"products"})
 public class Category {
     @Id
-    @NotNull(message = "Укажите идентификатор записи!")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "category_id")
     private Long id;

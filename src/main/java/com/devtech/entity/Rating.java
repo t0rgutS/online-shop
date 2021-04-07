@@ -16,7 +16,6 @@ import javax.validation.constraints.Positive;
 @NoArgsConstructor
 public class Rating {
     @Id
-    @NotNull(message = "Укажите идентификатор записи!")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "rating_id")
     private Long id;
