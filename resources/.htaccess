@@ -1,0 +1,8 @@
+Options All -Indexes
+RewriteEngine on
+RewriteCond %{REQUEST_URI} !/shop/static/(css|js|images)/(.*)$
+RewriteCond %{REQUEST_URI} !/shop/templates/(.*)$
+RewriteRule . /shop/templates/$1 [R]
+ErrorDocument 401 http://localhost/shop/templates/index.html
+ErrorDocument 403 http://localhost/shop/templates/index.html
+ErrorDocument 404 http://localhost/shop/templates/index.html
