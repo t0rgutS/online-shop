@@ -28,7 +28,7 @@ public class MultipartFileUploader {
             if (!file.isEmpty())
                 try {
                     byte[] bytes = file.getBytes();
-                    String filename = "../resources/static/images/" + file.getName();
+                    String filename = System.getProperty("user.dir") + "/src/main/resources/static/images/" + file.getName();
                     BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filename)));
                     stream.write(bytes);
                     stream.close();
